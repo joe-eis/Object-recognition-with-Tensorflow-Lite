@@ -1,0 +1,6 @@
+0 Meise
+1 unbekannt
+2 Sperling
+3 Star
+4 Taube
+5 Katze

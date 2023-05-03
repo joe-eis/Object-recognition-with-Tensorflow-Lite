@@ -1,0 +1,1 @@
+python3 classify_image4cpu.py --model model_label/model_quantized.tflite --label model_label/labels.txt --input image/sperling.jpg

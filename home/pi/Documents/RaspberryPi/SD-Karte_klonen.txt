@@ -1,0 +1,83 @@
+
+SD-Karte auf Platte sichern bzw klonen
+======================================
+
+Prinzip
+# dd if=/dev/sdX of=/pfad/zum/abbild bs=1M
+
+Welches Gerät?
+$ dmesg|tail -10
+[ 2146.161354] usbcore: registered new interface driver uas
+[ 2147.180412] scsi 5:0:0:0: Direct-Access     TS-RDF5  SD  Transcend    TS37 PQ: 0 ANSI: 6
+[ 2147.181124] sd 5:0:0:0: Attached scsi generic sg3 type 0
+[ 2147.615064] sd 5:0:0:0: [sdc] 498176 512-byte logical blocks: (255 MB/243 MiB)
+[ 2147.615921] sd 5:0:0:0: [sdc] Write Protect is off
+[ 2147.615927] sd 5:0:0:0: [sdc] Mode Sense: 23 00 00 00
+[ 2147.616730] sd 5:0:0:0: [sdc] Write cache: disabled, read cache: enabled, doesn't support DPO or FUA
+[ 2147.639304]  sdc: sdc1
+[ 2147.642089] sd 5:0:0:0: [sdc] Attached SCSI removable disk
+[ 2153.392579] FAT-fs (sdc1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck
+
+$ mount|grep /dev/sdc
+/dev/sdc1 on /media/joern/KODAK type vfat (rw,nosuid,nodev,relatime,uid=1000,gid=1000,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,showexec,utf8,flush,errors=remount-ro,uhelper=udisks2)
+
+Gerät zum Kopieren aushängen!
+$ umount/media/joern/KODAK
+
+Arbeit der Einfachheit als root:
+sudo -i
+
+
+Image auf Festplatte klonen, unkomprimiert
+
+FALL 1: Die Spender-SD-Karte ist nicht größer als die der Kopie
+-----------------------------------------------------------------
+dd if=/dev/sdc of=/home/joern/temp/raspberry-proj01_dd.img bs=1M
+
+Wiederherstellen/Kopieren
+dd if=/home/joern/temp/raspberry-proj01_dd.img of=/dev/sdc bs=1M
+
+oder komprimiert:
+dd if=/dev/sdc | gzip > /home/joern/temp/raspberry-proj01-dd.gz
+
+Wiederherstellen/Kopieren
+gzip -dc /home/joern/temp/raspberry-proj01-dd.gz | dd of=/dev/sdc
+
+FALL 2: Die Spender-SD-Karte ist größer als die des Klones, aber
+        diese ist nur soviel beschrieben, dass sie eine Verkleinerung
+        auf Größe des Klones zuläßt.
+        
+In diesem Fall sind folgende Schritte notwendig:
+1. Mounten des mit dd erzeugten Images [1]
+2. Verkleinern der Partitionen und auch der erweiterten Partition mit GParted [2]
+   (dazu Partition per GParted abhängen)
+3. verkleinertes Image auf Klone-SD zurückspielen
+
+--
+[1] https://thomasheinz.net/img-file-disk-image-unter-linux-mounten/
+[2] https://www.denniswilmsmann.de/2017/10/sd-karte-vom-raspberry-pi-auf-kleinere-sd-karte-klonen/
+------------------------------------------------
+[Update]
+
+RaspberryPi-Image
+=================
+
+Image verkleinern und klonen mit piShring:
+
+    sudo pishrink.sh raspberry-pi.img oder
+    sudo pishrink.sh raspberry-pi.img raspberry-pi_pishrink.img
+
+Image auf eine andere Karte:
+
+    sudo dd if=RaspberryPi_Tensorflow_pishrink.img of=/dev/sdf
+
+Um den Speicherplatz auf die komplette Speicherkarte auszudehnen, startet das System automatisch beim ersten Boot-Vorgang einmal neu durch.
+Am Ende landen wir dann wieder im gewohnten Raspbian-System; ein df -h zeigt, dass das System jetzt wieder die komplette Karte verwendet
+
+
+
+---
+wget https://raw.githubusercontent.com/Drewsif/PiShrink/master/pishrink.sh
+https://cbrell.de/blog/raspberry-pi-image-von-sd-retten-und-verkleinern/
+https://www.raspberry-pi-geek.de/ausgaben/rpg/2017/08/mit-pishrink-raspi-images-platzsparend-schrumpfen/2/
+

@@ -1,0 +1,2 @@
+	  mogrify -pointsize 20 -fill red -gravity SouthEast -draw "text 10,20 'Alarm: $VFLAG_S, Sensor-Wert: $DIFFA, $VDATE'" $PRJP/html/usbcambild.jpg
+     mogrify -pointsize 20 -fill red -gravity SouthEast -draw "text 10,20 'OK: $VFLAG_S, Sensor-Wert: $DIFFA, $VDATE'" $PRJP/neubild/usbcambild.jpg
