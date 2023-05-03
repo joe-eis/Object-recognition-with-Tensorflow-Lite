@@ -1,4 +1,4 @@
-Notizen zur Installation
+Notizen zur Installation -- outdated , not up to date
 
 /home/pi/Documents/Notizen_zur_Installation.txt
 
