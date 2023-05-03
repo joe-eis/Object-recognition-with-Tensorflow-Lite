@@ -6,7 +6,7 @@ https://youtu.be/l36XWpxnNPU
 
 Prerequisite
 -------------
-Installed Raspberry Pi image with the program "motion", Python 3.7 and the TensorflowLite runtime
+Installed Raspberry Pi image with the program "motion", Python 3.7, OpenCV-Python and the TensorflowLite runtime
 
 
 How it works
@@ -52,7 +52,7 @@ Unterscheidung von Tieren und Menschendurch von Google teachable machine trainie
 
 Voraussetzung
 -------------
-Installiertes Raspberry Pi Image mit dem Programm "motion", Python 3.7 und der TensorflowLite-Runtime
+Installiertes Raspberry Pi Image mit dem Programm "motion", Python 3.7, OpenCV-Python und der TensorflowLite-Runtime
 
 
 Arbeitsweise
