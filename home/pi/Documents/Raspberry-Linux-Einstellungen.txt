@@ -34,7 +34,7 @@ anschliessend das Skript /home/pi/python-env/motion/bin/start.bash.
 
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Historie-Installation
+Historie-Installation ----- outdated , not up to date
 ---------------------
 https://www.raspberrypi.org/software/
 
