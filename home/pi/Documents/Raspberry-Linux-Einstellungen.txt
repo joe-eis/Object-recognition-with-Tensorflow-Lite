@@ -1,0 +1,341 @@
+Arbeitsweise
+------------
+
+Programm "motion" macht einmal zyklisch Schnappschüsse, zum anderen Aufnahmen bei Bewegungserkennung und startet
+anschliessend das Skript /home/pi/python-env/motion/bin/start.bash.
+
+
+/home/pi/python-env/motion/bin/start.bash sucht die letzen Snapschuss- und Bewegungs-Aufnahmen und nennt diese in before.jpg und after.jpg um.
+
+/home/pi/python-env/motion/bin/start.bash startet /home/pi/python-env/motion/bin/fdifferenz_jpg.py
+
+        /home/pi/python-env/motion/bin/fdifferenz_jpg.py:
+        vergleicht die before.jpg und after.jpg und erstellt ein schwarzes Bild
+        diff.png mit rot eingefärbten Unterschied.
+
+
+/home/pi/python-env/motion/bin/start.bash startet /home/pi/python-env/motion/bin/trim.bash
+
+       /home/pi/python-env/motion/bin/trim.bash:
+       schneidet Bild um eingefärbten Ausschnitt und speichert dieses
+       als  /home/pi/python-env/motion/bild_cut/pic_cut_DATUM.jpg.
+
+       /home/pi/python-env/motion/bildverarbeitung/ temporäre Ablage für quadratisch- oder querformatigen erstellte objekt_DATUM.fdifferenz_jpg
+
+
+/home/pi/python-env/motion/bin/start.bash startet /home/pi/python-env/tflite_cpu_tpu/bin/start_tflite.bash
+
+      /home/pi/python-env/tflite_cpu_tpu/bin/start_tflite.bash:
+      Nehme ältestes Bild aus Verzeichnis /home/pi/python-env/motion/bildablage und schicke dieses durch classify_image.py, welches den Bildinhalt feststellt.
+      Werte Inhalt (Klasse/Objekt) aus und start ggf. alarm_action.sh.
+      Beschrifte Bild mit Objekt und Wahrscheinlichkeitund verschiebe es nach /home/pi/python-env/bild_tf-abgelegt/objekt_DATUM.jpg.
+
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Historie-Installation
+---------------------
+https://www.raspberrypi.org/software/
+
+RPI-Version 2021-04-18
+pi@raspberrypi:~ $ uname -a
+Linux raspberrypi 5.10.17-v7+
+
+user: pi
+Passwort: raspberry
+
+sudo systemctl start ssh
+sudo systemctl enable ssh
+pi@raspberrypi:~ $ uname -a
+Linux raspberrypi 5.10.17-v7+
+Client
+------
+Ggf. auf Client: ssh-keygen -f "/home/joern/.ssh/known_hosts" -R "192.168.178.23"
+ssh pi@192.168.178.23
+
+Anmeldung per Schlüssel
+-----------------------
+pi@raspberrypi:~ $ mkdir .ssh
+pi@raspberrypi:~ $ chmod 700 .ssh
+
+Kopiere den öffentlichen Schlüssel als authorized_keys in das $HOME?.ssh-Verzeichnis von pi:
+
+joern@EliteDesk:~$ cat ~/.ssh/id_rsa.pub | ssh pi@192.168.178.23 'cat >> .ssh/authorized_keys'
+pi@192.168.178.23's password:
+
+pi@raspberrypi:~ $ ls -l .ssh
+insgesamt 4
+-rw-r--r-- 1 pi pi 741 Apr 18 17:20 authorized_keys
+
+
+
+Nachinstallieren
+----------------
+sudo apt update
+sudo apt upgrade
+sudo apt autoremove
+
+Webcam-Schnappschuss: fswebcam
+http://www.netzmafia.de/skripten/hardware/Webcam/
+
+Bildschirmfoto: scrot
+Video: vlc
+Bildbetrachter: feh
+Editor: vim
+Filemanager: mc, pcmanfm, nnn
+
+Schon installiert: v4l-utils
+Webcams (Video-Device) abfragen: v4l2-ctl --list-devices
+v4l2-ctl --list-formats-ext
+v4l2-ctl --all
+Eigenschaften eines VD: v4l2-ctl -d /dev/video0 --list-ctrls
+
+Beispiel zur Einstellung:
+v4l2-ctl --set-ctrl=brightness=128
+https://www.kuketz-blog.de/verwaltung-der-webcam-mit-linux-v4l2-ctl-und-guvcview/
+
+Grafische Version
+guvcview
+guvcview --control_panel
+
+
+
+
+
+sudo apt install arp-scan arp-scan
+
+ssh pi@192.168.178.23
+
+0.) journalctl -b -g rtkit --no-pager
+
+1.) IPv6 abschalten:
+
+In der Datei /etc/sysctl.conf
+net.ipv6.conf.all.disable_ipv6 = 1
+
+Änderung anwenden mit reboot oder Konsolenbefehl: sudo sysctl -p
+
+2. WLAN0 Power Management aus
+
+Eintrag in der Datei /etc/rc.local vor "exit"
+iw dev wlan0 set power_save off
+
+Änderung anwenden mit reboot oder Konsolenbefehl: sudo iw dev wlan0 set power_save off
+
+
+3. Bluetooth ausschalten
+
+Folgende Eingaben über der Konsole führen zum Anhalten und abstellen vom Autostart
+sudo systemctl stop bluetooth.service
+sudo systemctl disable bluetooth.service
+
+4. SSH-Konfiguration
+/etc/ssh/sshd_config
+-----------------------
+TCPKeepAlive yes
+ClientAliveIntervall 60
+
+* * *
+
+********************************
+Automatischer Netzgerät Neustart
+--------------------------------
+
+pi@raspberrypi:~ $ crontab -e
+
+# m h  dom mon dow   command
+*/1   *  *  *  * /home/pi/bin/reset-netz.sh
+
+
+Steuerskript
+------------
+2 Funktionen
+1. Startet beide Netzgeräte durch wenn keines mehr aktiv ist
+2. Sendet Ping zum Router. Die ist irgenwie bei dieser Softwareversion notwendig,
+   um bei WLAN die verbindung nicht zu verlieren.
+
+pi@raspberrypi:~ $ cat /home/pi/bin/reset-netz.sh
+#!/bin/bash
+# joe-eis, 2021-01-19 V0.3
+
+VDATE=`date '+%Y-%m-%d_%H:%M:%S'`
+
+
+USTATE=`ip  -p address show|grep -v 'LOOPBACK' |egrep 'state UP'|tr " " ":"|cut -d: -f3|wc -l`
+ASTATE=`ip  -p address show|grep -v 'LOOPBACK' |egrep 'state'|tr " " ":"|cut -d: -f3|wc -l`
+NDOWN=`ip  -p address show|egrep 'state DOWN'|tr " " ":"|cut -d: -f3|wc -l`
+
+#echo "Anzahl vorhandener Netzgeräte $ASTATE"
+#echo "Anzahl Geräte in $NDOWN"
+
+if [ "$NDOWN" -eq "$ASTATE" ]; then
+    #echo "$NDOWN von $ASTATE Netzgeräte sind down"
+    echo "$VDATE: $NDOWN von $ASTATE Netzgeräte sind down" >> netz.log
+
+    sudo ifconfig eth0 down
+    sleep 5
+    sudo ifconfig eth0 up
+    sleep 1
+    sudo ifconfig wlan0 down
+    sleep 5
+    sudo ifconfig wlan0 up
+
+
+    echo "$VDATE: Netzgerät(e) durch gestartet" >> netz.log
+    USTATE=`ip  -p address show|grep -v 'LOOPBACK' |egrep 'state UP'|tr " " ":"|cut -d: -f3|wc -l`
+    echo "Es ist/sind $USTATE Netzwerk Geräte aktiv" >> netz.log
+
+else
+
+    ND=`ip  -p address show|egrep 'state UP'|tr " " ":"|cut -d: -f3|head -1`
+    GW=`ip route |head -1|grep default|cut -d" " -f3`
+    PTL=`ping -c1 $GW|grep 'packets transmitted'|tr " " ":"|cut -d: -f6|cut -d% -f1`
+
+
+    #echo "Network Device is $ND" # debug
+    #echo "Gateway is $GW"        # debug
+    #echo "Packets transmitting loss ist $PTL %"  # debug
+
+fi
+
+# ENDE
+
+
+-------------------------------------------------------------------------
+
+
+
+http://192.168.178.23:8081/
+--------------------------
+
+
+
+ 
+IPv6 disabeln
+------------------
+sudo vi /etc/sysctl.conf
+net.ipv6.conf.all.disable_ipv6 = 1
+sudo sysctl -p
+
+WLAN0 Power Management aus
+--------------------------------------------
+sudo vi /etc/rc.local
+iw dev wlan0 set power_save off
+
+Bluetooth ausschalten
+-----------------------------
+sudo systemctl stop bluetooth.service
+sudo systemctl disable bluetooth.service
+
+* * *
+
+
+Auch interessant:
+https://www.tutonaut.de/anleitung-raspberry-pi-ohne-monitor-und-tastatur-headless-einrichten/
+
+
+SD-Image oder Karte auf 'kleinere' umkopieren durch  Image mounten und
+schrumpfen:
+https://thomasheinz.net/img-file-disk-image-unter-linux-mounten/
+https://www.denniswilmsmann.de/2017/10/sd-karte-vom-raspberry-pi-auf-kleinere-sd-karte-klonen/
+
+   * * *
+   
+   Motion
+-------------------------------------------
+$ sudo apt install motion
+$ mkdir -p /home/pi/motion/log
+$ mkdir    /home/pi/motion/pid
+$ mkdir    /home/pi/motion/conf.d
+$ sudo usermod -aG pi motion
+$ chmod -R 774 /home/pi/motion/
+
+$ sudo vi /etc/default/motion
+start_motion_daemon=yes
+
+$ cd /etc/motion/
+$ sudo cp motion.conf motion.conf_orig
+/etc/motion $ sudo vi motion.conf
+
+------------------------------------------------
+--- /etc/motion/motion.conf mit einer Kamera ---
+------------------------------------------------
+daemon on
+
+process_id_file /home/pi/motion/pid/motion.pid
+
+logfile /home/pi/motion/log/motion_01.log
+target_dir /home/pi/motion/motion01
+
+### v4l2-ctl --list-formats-ext gibt fuer dieses device YUYV an = 15 an
+v4l2_palette 15
+
+width 1280
+height 1024
+framerate 5
+threshold 5000
+
+event_gap 30
+output_pictures best
+quality 90
+stream_quality 70
+
+stream_localhost on
+============================================
+
+----------------------------------------------------
+--- /etc/motion/motion.conf mit mehreren Kameras ---
+----------------------------------------------------
+daemon on
+process_id_file /home/pi/motion/pid/motion.pid
+logfile /home/pi/motion/log/motion_01.log
+
+; videodevice /dev/video0
+; v4l2_palette 15
+
+
+; width 1280
+; height 1024
+; framerate 5
+; threshold 5000
+
+; target_dir /home/pi/motion/motion_01
+; stream_port 8081
+
+event_gap 30
+output_pictures best
+quality 90
+stream_quality 70
+
+stream_localhost on
+
+=========================================
+# /home/pi/motion/conf.d/camera01.conf
+
+videodevice /dev/video0
+v4l2_palette 15
+
+width 1280
+height 1024
+framerate 5
+
+threshold 5000
+text_left Camera %t
+
+target_dir /home/pi/motion/motion01
+
+stream_port 8081
+
+camera /home/pi/motion/conf.d/thread_01.conf
+
+# oder
+# camera_dir /home/pi/motion/conf.d/
+----------------------------------------
+camera /home/pi/motion/conf/thread_02.conf
+
+---------
+
+
+
+

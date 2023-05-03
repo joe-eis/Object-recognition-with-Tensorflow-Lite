@@ -1,0 +1,8 @@
+ 
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+#
+# m   h  dom  mon dow   command
+*/17  *    *   *    *    /home/pi/bin/wlan0_reset.sh
+15    21   *   *    *    /usr/bin/sudo /usr/bin/systemctl stop motion.service
+30    4    *   *    *    /usr/bin/sudo /usr/bin/systemctl start motion.service

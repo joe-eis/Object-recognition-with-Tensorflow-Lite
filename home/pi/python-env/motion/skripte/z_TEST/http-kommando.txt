@@ -1,0 +1,11 @@
+Bedingung: /etc/motion/motion.conf
+webcontrol_parms
+2: Advanced - The advanced list of parameters will be available. These typically require Motion to be restarted to become effective.
+
+
+/usr/bin/lwp-request http://localhost:8080/0/detection/status 
+/usr/bin/lwp-request http://localhost:8080/0/detection/status|grep status|tr ' ' ':'|cut -d: -f7
+
+/usr/bin/lwp-request http://localhost:8080/0/detection/pause  > /dev/null 
+/usr/bin/lwp-request http://localhost:8080/0/detection/start  > /dev/null
+

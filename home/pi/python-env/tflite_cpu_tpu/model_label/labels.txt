@@ -1,0 +1,6 @@
+0 Katze
+1 Mensch
+2 Objekt
+3 Taube
+4 Singvogel
+5 Hund

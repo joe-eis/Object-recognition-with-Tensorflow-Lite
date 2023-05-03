@@ -1,0 +1,9 @@
+Die Erkennung funktioniert nur bei quantisierten Models richtig,
+bzw, bei Gleitkomma ist Dateigröße rund 2MB.
+
+Bei mehr als 6 Objeten funktioniert die Konvertierung in
+Googls Teachable Machine nach tensorflow lite nicht.
+
+Es lohnt sich hier nicht, zumindestens Bei 6 Objekten, die Coral TPU
+einzusetzen. Die interne verarbeitung geht zwar schneller, aber die
+längerdauernde Ausgabe macht diesen Zeitgewinn wieder zunichte.

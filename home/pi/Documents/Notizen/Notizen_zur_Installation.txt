@@ -1,0 +1,531 @@
+Notizen zur Installation
+
+/home/pi/Documents/Notizen_zur_Installation.txt
+
+
+Auswahl Raspberry PI OS - Debian Port
+-------------------------------------
+Info:
+----------------------------------
+https://stadt-bremerhaven.de/raspberry-pi-ohne-monitor-und-tastatur-raspbian-installieren-ssh-vnc-und-wlan-konfigurieren/
+https://www.elektronik-kompendium.de/sites/raspberry-pi/1906291.htm
+---------------------------------
+
+Download rpi-imager:
+https://www.raspberrypi.com/software/
+* * *
+
+„Debian Bullseye hat relativ wenige größere Änderungen, die für Benutzer sichtbar sind"
+Fenstermanager jetzt „Mutter“ anstelle von „OpenBox“. 
+Mit dieser neuen Version werden die vertrauten Kamerabefehle raspistill und raspicam durch eine neue Suite von Open-Source-Tools ersetzt, 
+die darauf ausgerichtet sind, das Beste aus allen offiziellen Raspberry Pi-Kameras herauszuholen. Libcamera ist eine Unterstützungsbibliothek für Linux, Android und ChromeOS.
+Funktioniert aber z. Zt nur für Raspberry Version 4  .
+
+
+[1] https://www.raspberrypi.com/news/raspberry-pi-os-debian-bullseye/
+[2] https://www.raspberrypi.com/news/bullseye-camera-system/
+[3] https://forums.raspberrypi.com/viewtopic.php?t=323547
+
+
+Version zuvor (2021-05-28):
+https://downloads.raspberrypi.org/raspios_armhf/images/raspios_armhf-2021-05-28/
+sha1sum  2021-05-07-raspios-buster-armhf.zip > download.sha1 & sha1sum  2021-05-07-raspios-buster-armhf.zip > download.sha1
+Vergleiche mit .zip.sh1sudo apt autoremove
+* * *
+SSH-Einwahl hat nicht funktioniert, Dienst ist nicht gestartet und lässt sich im Nachhinein auch nicht Enablen.
+
+Alte System-Dienste
+sudo service ssh start = sudo systemctl start ssh
+sudo update-rc.d ssh defaults = sudo systemctl enable ssh
+
+
+Ist ganz schön verbugt
+Erstmal Update
+Hashes mismatch
+sudo rm -rf /var/lib/apt/lists/*
+
+sudo apt-get update
+sudo apt-get upgrade
+
+
+"Während der Überprüfung der Signatur trat ein Fehler auf. Das Depot wurde nicht aktualisiert und die vorherigen Indexdateien werden verwendet.
+"GPG-Fehler: https://packages.cloud.google.com/apt coral-edgetpu-stable InRelease: Die folgenden Signaturen konnten nicht überprüft werden,
+"weil ihr öffentlicher Schlüssel nicht verfügbar ist: NO_PUBKEY B53DC80D13EDEF05
+W: Fehlschlag beim Holen von https://packages.cloud.google.com/apt/dists/coral-edgetpu-stable/InRelease Die folgenden Signaturen konnten nicht überprüft werden,
+weil ihr öffentlicher Schlüssel nicht verfügbar ist: NO_PUBKEY B53DC80D13EDEF05
+W: Einige Indexdateien konnten nicht heruntergeladen werden. Sie wurden ignoriert oder alte an ihrer Stelle benutzt."
+
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys B53DC80D13EDEF05
+
+####################################################################################################################################################################################
+**********************************************
+          BEGINN # 2 Raspi BUSTER
+**********************************************
+Neues Spiel, Version 2021-03-04-raspios-buster
+
+https://downloads.raspberrypi.org/raspios_armhf/images/raspios_armhf-2021rm -f /home/pi/motion/motion//home/pi/motion/motion/snap_blah-foo.jpg-03-25/2021-03-04-raspios-buster-armhf.zip
+
+sha1sum 2021-03-04-raspios-buster-armhf.zip > download.sha1
+cat download.sha1
+cat 2021-03-04-raspios-buster-armhf.zip.sha1
+OK?
+
+unzip .zip -> .img
+sudo rpi-imager: Eigenes Image/2021-03-04-raspios-buster-armhf.img
+SD-Karte: USB Mass Storage
+SCHREIBEN
+--------------------------------------------------------------
+
+Start: $ sudo rpi-imager
+
+oder
+
+$ mount|grep ^/dev
+- wenn gemountet:
+$ sudo diskutil umount /dev/disk1s1
+$ lsblk
+
+$ sudo dd if=raspbian.img of=/dev/sdf bs=1M status=progress
+$ sync
+
+* * *
+
+Zu Beginn:
+Im /boot-Verzeichnis einen leeren Ordner namens ssh erstellen
+
+$ sudo mkdir /media/NAME/boot/ssh
+
+
+Mit neuem Image booten
+-----------------------
+Desktop: ssh pi@IP-ADRESSE
+Desktop: ssh pi@192.168.178.23 # In Fritzbox nachgesehen
+--------------------------------------------------------
+
+> juhu, es funktioniert <
+
+Passwortlosen Zugang per SSH-Key ohne Pass-Phrase:
+Desktop: $ ssh-keygen -f "/home/joern/.ssh/known_hosts" -R "192.168.178.23"
+
+Desktop: ssh pi@192.168.178.23
+Passwort: raspberry
+
+Raspberry PI: 
+pi@raspberrypi:~ $ mkdir .ssh
+pi@raspberrypi:~ $ chmod 700 .ssh
+
+
+Desktop: cat ~/.ssh/id_rsa.pub | ssh pi@192.168.178.23 'cat >> .ssh/authorized_keys'
+
+Desktop: ssh pi@192.168.178.23
+-> Nun sollte der Passortlose Zugang funktionieren.
+
+* * *
+pi-Passwort ändern:
+pi$ passw
+altes PW: raspberry
+neues PW: joernisthier
+
+-------------------------------------
+sudo raspi-config
+1. System Options
+   WLAN: DE Germany
+   SSID: Argusbeere
+   Passphr.: EuRuFfddV_49
+2. Display Option
+   D1 Resulution z.B. 1280x1024
+3. Interface Optionen
+   P1 Camera, wenn Raspi-Cam verfügbar
+
+5. Localisation Options
+   L1 Locale de_DE.UTF8   
+   L2 Timezone Europa-Berlin
+   L3 Keyboard
+   L4 WLAN Country
+
+8. Update
+
+reboot <yes>
+-------------------------------------
+
+System Update:
+sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y
+
+Nach Systemapdate kann es passieren, dass die Raspi-Cam nicht mehr funktioniert.
+Kommt es zu dieser Fehlermeldung: 
+ERROR: the system appears to be configured for the legacy camera stack
+dann kann ggf. ein sudo rpi-update && sudo reboot helfen.
+
+
+* * *
+Zwischenstand 2022-03-24
+$ uname -a
+Linux raspberrypi 5.10.103-v7+ #1529 SMP Tue Mar 8 12:21:37 GMT 2022 armv7l GNU/Linux
+
+$ cat /etc/os-release 
+PRETTY_NAME="Raspbian GNU/Linux 10 (buster)"
+NAME="Raspbian GNU/Linux"
+* * *
+
+Nachkonfiguration
+-----------------
+Die SD-Karte beim Raspberry Pi schonen
+
+Die SD-Karte beim Raspberry Pi schonen ist eine gute Idee, führen doch viele Schreibzugriffe dazu, dass sich die Lebensdauer der SD-Karte verkürzt. 
+https://www.tuxlog.de/raspberrypi/2014/die-sd-karte-beim-raspberry-pi-schonen/
+
+Um das Schreiben der Zeitstempel für den letzten Lesezugriff abzustellen, editiert man die Datei /etc/fstab und ergänzt dort die Attribute ’nodiratime‘.
+PARTUUID=95f5735a-02   /   ext4   defaults,nodiratime,noatime   0   1
+
+
+
+Nachinstallation
+----------------
+Anmeldung per Grafik:  via Remmina RDP (Client) -> xrdp (Raspberry), ssh -X
+Bildschirmfoto: scrot
+Video: vlc    # ist bereits installiert
+Bildbetrachter: feh
+Editor: vim
+Filemanager: pcmanfm (system), mc
+Webcam-Viewer guvcview
+Grafikbearbeitung: GPicView, ImageMagick
+Webcam-Aufnahme: fswebcam
+
+-> sudo apt install scrot feh vim mc guvcview arp-scan fswebcam imagemagick -y
+
+
+Raspi-Camera-Test: 
+raspistill -v -o test.jpg
+raspivid -o vid.h264
+
+Aufnehmen per Python:
+sudo apt install python3-picamera
+-------------------------------------------------
+#! /usr/bin/env python3
+import picamera
+with picamera.PiCamera() as camera:
+     camera.start_preview()
+     camera.capture('/home/pi/Images/python.jpg')
+     camera.stop_preview()
+-------------------------------------------------
+* * *
+0.) sudo journalctl -b -g rtkit --no-pager
+
+1.) IPv6 abschalten:
+
+In der Datei /etc/sysctl.conf
+net.ipv6.conf.all.disable_ipv6 = 1
+
+Änderung anwenden mit reboot oder Konsolenbefehl: sudo sysctl -p
+2. WLAN0 Power Management aus
+
+Eintrag in der Datei /etc/rc.local vor "exit"
+iw dev wlan0 set power_save off
+
+Änderung anwenden mit reboot oder Konsolenbefehl: sudo iw dev wlan0 set power_save off
+
+ 3. Bluetooth ausschalten
+
+Folgende Eingaben über der Konsole führen zum Anhalten und abstellen vom Autostart
+sudo systemctl stop bluetooth.service && sudo systemctl disable bluetooth.service
+
+4. SSH-Konfiguration
+
+sudo apt-get install xauth
+
+/etc/ssh/sshd_config
+-----------------------
+X11Forwarding yes
+TCPKeepAlive yes
+ClientAliveIntervall 60
+
+sudo systemctl restart sshd.service
+
+wenn "echo $DISPLAY" leer bleibt:
+/etc/lightdm/lightdm.conf
+-------------------------
+[Seat:*]
+xserver-allow-tcp=true
+
+
+* * *
+
+Grafische Verbindung
+--------------------
+
+sudo apt-get install xrdp
+Remmina/RDP
+
+Dateitransport
+--------------
+Remmina/sFTP
+Linux: Dolphin fish://USER@IP
+
+* * *
+
+Grafische Verbindung
+--------------------
+ssh -X
+
+sudo apt-get install xrdp
+
+sudo systemctl status xrdp
+● xrdp.service - xrdp daemon
+   Loaded: loaded (/lib/systemd/system/xrdp.service; enabled; vendor preset: enabled)
+   Active: active (running
+
+Client: Remmina
+
+-------------------------------------------------------
+Problem mit pam bei der grafischen Anmeldung?
+Fuktioniert pi $ passwd ? Wenn nein, einfacheres passwort via raspi-config vergeben.
+
+***********************************************************************************
+
+
+
+Python 3.7 mit Deadsnakes vs Source installiert:
+
+sudo apt update
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.7
+sudo apt-get install python3-venv
+
+python3.7 -m venv MyEnv bzw.
+python3.7 -m venv tflite-sys
+
+* * *
+Um eine Miniconda-Umgebung mit Python 3.7 auf einem Raspberry Pi mit ARM-Prozessor zu erstellen,
+müssen Sie die folgenden Schritte ausführen:
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-armv7l.sh
+bash Miniconda3-latest-Linux-armv7l.sh
+conda create --name env_name python=3.7
+conda activate env_name
+
+* * *
+
+Im System:
+sudo ln -sf /usr/bin/python3.7 /usr/bin/python
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1 # Die letzte Zioffer, hier 1, bedeutet Priorität
+
+
+
+   Motion
+-------------------------------------------
+$ sudo apt install motion -y
+$ mkdir -p /home/pi/motion/log
+$ mkdir    /home/pi/motion/pid
+$ mkdir    /home/pi/motion/motion
+$ mkdir    /home/pi/motion/conf.d
+$ sudo usermod -aG pi motion
+$ sudo usermod -aG motion pi
+$ sudo chmod -R 774 /home/pi/motion/
+
+$ sudo vi /etc/default/motion
+start_motion_daemon=yes
+
+$ cd /etc/motion/
+$ sudo cp motion.conf motion.conf_orig
+
+
+Motion-Version: Version 4.1.1,
+
+
+/etc/motion.conf # Eine Kamera, Raspi-Camera
+............................................
+sudo vi /etc/motion/motion.conf
+### :set number
+1. Dateien
+----------
+ 11 daemon_mode on
+ 14 process_id_file /home/pi/motion/pid/motion.pid
+ 25 logfile /home/pi/motion/log/motion.log
+ 28 log_level 4 # nur Fehler loggen
+177 threshold 2500 
+199 # area_detect 3456789 -> besser: Maske erstellem
+
+----
+Maskier-Maske erstellen
+
+Kopiere Snapshot: 
+joern@EliteDesk:~/Dokumente/Doku-Linux/Motion$ scp pi@192.168.178.23:/home/pi/motion/snap_2022-04-08_10* .
+Bereiche, die nicht erfasst werden sollen, z.B. in Gimp, schwarz maskieren, die anderen weiß. 
+Datei als *.pgm speichern, z.B. maske_01.pgm und auf den Motion-Server kopieren:
+joern@EliteDesk:~/Dokumente/Doku-Linux/Motion$ scp maske_01.pgm pi@192.168.178.23:/home/pi/motion
+----
+203 mask_file /home/pi/motion/maske_01.pgm
+
+
+258 output_pictures best
+264 quality 95
+332 snapshot_intervall 900
+365 text_rigt RaspiCam
+404 target_dir /home/pi/motion/motion
+
+420 snapshot_filename   snap_%Y-%m-%d-%H.%M.%S
+429 picture_filename    pic_%Y-%m-%d_%H.%M.%S-%q
+434 movie_filename      movie_%Y-%m-%d_%H.%M.%S
+
+468 stream_localhost off
+
+479 stream_auth_method 2
+483 stream_authentification username:password -> max:wilhelm2
+
+616 on_picture_save /home/pi/motion/bin/start.bash # reagiert auch auf Schnappschüsse => Abfrage, ob 'last snap_*' älter als 1(?) Minute ist und/bzw. 'last pic_*' jünger ist als 'last_snap_*'      
+
+Notfalls diese Option und Zeitverzögerung:
+623 ; on_area_detected /home/pi/motion/bin/start.bash # reagiert zu zeitig
+
+Bei Programmstart Snapshot auslösen:
+z.B.:
+curl -u username:passwort http://[IP-Adresse]:8080/0/action/snapshot
+curl http://192.168.178.23:8080/0/action/snapshot
+
+sudo systemctl start motion.service && sleep 10 && curl http://192.168.178.23:8080/0/action/snapshot
+ 
+ oder fr testbilder, wenn Motion aus ist:
+fswebcam --no-banner -r 1280x1024 /home/pi/motion/motion/snap_start.jpg
+
+
+
+
+2. Kamera-Videoeinstellung
+--------------------------
+Der Befehl 'v4l2-ctl --list-formats-ext'liest eine Auflösung von 2592x1944 aus, bzw.
+$ v4l2-ctl -V
+Format Video Capture:
+	Width/Height      : 2592/1944
+	Pixel Format      : 'YU12' (Planar YUV 4:2:0)
+	Colorspace        : SMPTE 170M
+	
+bei einer USB-Kamera auch: z.B.
+$ lsusb
+Bus 001 Device 002: ID 5986:0241 Acer, Inc BisonCam, NB Pro
+
+$ lsusb -s 001:002 -v | egrep "Width|Height"
+    wWidth    640
+    wHeight   480
+    wWidth    1280
+    wHeight   1024
+
+# Image width (pixels). Valid range: Camera dependent, default: 320
+# width 2592
+width 1280
+# width 1296 # diese Auflösung geht nicht!
+
+# Image height (pixels). Valid range: Camera dependent, default: 240
+# height 1944
+# height 720
+height 1024
+# height 972 # geht nicht
+
+Die Raspi-Cam-Auflösung 2592 x 1944 überfordert die Rechenleistung von Raspi V3.
+
+-->  Performanter ist 1280 x 720 <--
+ 
+ Die Raspi-Cam-Auflösung 2592 x 1944 überfordert die Rechenleistung von Raspi V3.
+ Performanter ist 1280 x 720.
+
+............................................................................................
+ 43 v2l2_palette 8 # siehe Ausgabe der motion.log
+ 79 width  2592 # statt 320, besser 1280
+ 82 height 1944 # statt 240, besser 720 oder 1024
+ 86 framerate 5 # statt 2
+172 threshold 2500 # statt 1500
+327 snapshot_intervall 900
+455 stream motion on
+
+3. Ausgabe
+----------
+253 output_pictures on
+259 quality 95
+285 ffmpeg_video_codec mp4 # statt mkv
+413 snapshot_filename snap_%Y-%m-%d_%H.%M.%S
+422 picture_filename pic_%Y-%m-%d_%H.%M.%S-%q
+427 movie_filename   movie_%Y-%m-%d_%H.%M.%S
+451 stream_quality 70Ich sehe fehlenden Grundlagenwissen der Entscheider 
+461 stream_localhost off # Freigabe in das Netzwerk
+483 stream_authentification max:wilhelm2
+502 webcontrol_localhost off
+
+4 Wirkung
+----------
+609 on_picture_save skript_verarbeitung.bash
+624 on_camera_lost skript_sabotage-alarm.bash
+
+
+Virtuelle Python-Umgebung einrichten:
+#########################################################################################
+
+python3 -m venv motion
+..........................................................................................
+
+Verlassen mit 'deactivate'
+Betreten mit 'source motion/bin/activate'
+
+
+Python-Programme:
+sudo apt install libatlas-base-dev
+
+pip3 Update:
+pip3 install --upgrade pip
+
+pip3 install opencv-python pillowl
+
+Aktuellere Version von numpy , 1.21.5, wird benötigt. 
+Aber numpy ist schon in einer anderen Version, 1.16.2, als deb-Paket installiert mit div. Abhängigkeiten, u.a zu python3-picamera. 
+
+* * *
+Um nun ohne den Aufruf "python3 -m venv motion" ein Python-Script starten zu können, also wenn dieses Skript automatisch über ein anderes 
+Skript oder einen Chrone-Job gestartet werden soll, muss dazu ein Wrapper benutzt werden:
+
+-----------------------------------------
+/IM-VIR_VERZ/bin/python3 python-skript.py
+-----------------------------------------
+
+
+
+$ ls -l motion/motion/
+insgesamt 252
+lrwxrwxrwx 1 motion motion     28 Apr  5 19:13 lastsnap.jpg -> snap_2022-04-05-19.13.33.jpg
+-rw-r--r-- 1 motion motion 123841 Apr  5 19:11 snap_2022-04-05-19.11.58.jpg
+-rw-r--r-- 1 motion motion 127715 Apr  5 19:13 snap_2022-04-05-19.13.33.jpg
+
+$ ll motion/objekte/
+insgesamt 8,0K
+drwxrwxr-x  2 pi pi 4,0K Apr  5 18:39 .
+drwxrwxr-x 11 pi pi 4,0K Apr  4 17:07 ..
+
+In /home/pi/motion/objekte liegen dann die von tflite auszuwertenden Bilddateien.
+
+
+ENDE Installation motion und Ausschneiden mit ImageMagick
+---------------------------------------------------------
+
+#####
+Rechnen mit dem Zeitstempel
+---------------------------
+
+Alter Referenzdatei:
+$ ls -l --time-style=+%s referenz|cut -d" " -f6
+1649087780
+
+Aktuelle Zeit:
+$ date +%s
+1649091403
+
+* *
+$ SEC_NOW=`date +%s`
+
+$ touch referenz
+$ SEC_REF=`ls -l --time-style=+%s referenz |cut -d" " -f6`
+
+$ expr $SEC_NOW - $SEC_REF
+294
+
+
+
+
+
