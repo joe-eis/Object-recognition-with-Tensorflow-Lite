@@ -25,11 +25,6 @@ DATE=`date +%F_%H.%M.%S`
 echo "$DATE start.bash gestartet" >> $LOG/start.log
 SEC_0=`date +%s`
 
-# Stoppe Motion-Detektion, solange Skript läuft
-# dafür muss in der /etc/motion/motion.conf webcontrol_parms auf Parameter 2 gesetzt sein
-/usr/bin/lwp-request http://max:moritz2@localhost:8080/0/detection/pause  > /dev/null
-#-# echo "Motion-Service gestoppt" 
-
 LAST_PIC=`ls -1t $MOTION_PIC|grep pic|head -1`
 LAST_SNAP=`ls -1t $MOTION_PIC|grep snap|grep -v lastsnap|head -1`
 SEC_LAST_SNAP=`ls -1t $MOTION_PIC|grep snap|grep -v lastsnap|head -2|tail -1`
@@ -55,13 +50,13 @@ if [[ "$SEC_DIFF" -gt 30 ]]; then
     
     # Nenne letzes Aktion-Bild um:
     # echo "cp $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg"
-    # echo "cp $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg" >> $LOG/start.log
-    cp $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg
+    echo "cp -r $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg" >> $LOG/start.log
+    cp -r $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg
 
     # nenne Snapshot im before um
     # echo "cp $MOTION_PIC/$LAST_SNAP $MOTION_PIC/before.jpg"
-    # echo "cp $MOTION_PIC/$LAST_SNAP $MOTION_PIC/before.jpg" >> $LOG/start.log
-    cp $MOTION_PIC/$LAST_SNAP $MOTION_PIC/before.jpg
+    echo "cp -r $MOTION_PIC/$LAST_SNAP $MOTION_PIC/before.jpg" >> $LOG/start.log
+    cp -r $MOTION_PIC/$LAST_SNAP $MOTION_PIC/before.jpg
 
     # Verkleinere Bilder für kürzere Verarbeitungszeit bei Raspi V3 # Auflösung in motion.conf geändert
     # mogrify -resize 70% $MOTION_PIC/after.jpg
@@ -72,12 +67,12 @@ if [[ "$SEC_DIFF" -gt 30 ]]; then
     # echo "Rufe Python-Skript differenz_jpg.py auf"
     # echo "$DATE2: Rufe Python-Skript differenz_jpg.py auf" >> $LOG/start.log
     # Erzeuge ein rot maskiertes Bild diff.png der Unterschiede von before.jpg und after.jpg im selben Verzeichnis
-    # echo "Erzeuge ein rot maskiertes Bild diff.png der Unterschiede von before.jpg und after.jpg im selben Verzeichnis" >> $LOG/start.log
+    echo "Erzeuge ein rot maskiertes Bild diff.png der Unterschiede von before.jpg und after.jpg im selben Verzeichnis" >> $LOG/start.log
     $SYS_BIN/python3  $MOTION_BIN/differenz_jpg.py
 
     DATE3=`date +%F_%H.%M.%S`
     # echo "Rufe trim.bash auf"
-    # echo "$DATE3: Rufe trim.bash auf" >> $LOG/start.log
+    echo "$DATE3: Rufe trim.bash auf" >> $LOG/start.log
     # Image after.jpg wird auf die Größe von ROI.jpg getrimmt.
     $MOTION_BIN/trim.bash
     # $SYS_BIN/python3  $MOTION_BIN/trim.py
@@ -89,6 +84,7 @@ if [[ "$SEC_DIFF" -gt 30 ]]; then
     $TFLITE_BIN/start_tflite.bash
 
     # echo "ENDE mit Bildverarbeitung" 
+    echo "ENDE mit Bildverarbeitung" >> $LOG/start.log
 
 else
 
@@ -98,7 +94,7 @@ else
         if [ -z "$SEC_LAST_SNAP" ]; then
        	    # echo "Variable '$SEC_LAST_SNAP' ist leer"
             # echo "ENDE ohne Bildverarbeitung, kein vorletzter Snapshot vorhanden"
-            # echo "ENDE ohne Bildverarbeitung, kein vorletzter Snapshot vorhanden" >> $LOG/start.log
+            echo "ENDE ohne Bildverarbeitung, kein vorletzter Snapshot vorhanden" >> $LOG/start.log
 	    exit
         fi
 	
@@ -108,13 +104,13 @@ else
 
         # Nenne letzes Aktion-Bild um:
         # echo "cp $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg"
-        # echo "cp $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg" >> $LOG/start.log
-        cp $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg
+        echo "cp -r $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg" >> $LOG/start.log
+        cp -r $MOTION_PIC/$LAST_PIC $MOTION_PIC/after.jpg
 
         # nenne vorletzten Snapshot im before um
         # echo "cp $MOTION PIC/$SEC_LAST_SNAP $MOTION_PIC/before.jpg"
-        # echo "cp $MOTION PIC/$SEC_LAST_SNAP $MOTION_PIC/before.jpg" >> $LOG/start.log
-        cp $MOTION_PIC/$SEC_LAST_SNAP $MOTION_PIC/before.jpg
+        echo "cp -r $MOTION PIC/$SEC_LAST_SNAP $MOTION_PIC/before.jpg" >> $LOG/start.log
+        cp -r $MOTION_PIC/$SEC_LAST_SNAP $MOTION_PIC/before.jpg
     
         # Verkleinere Bilder für kürzere Verarbeitungszeit bei Raspi V3 # Auflösung in motion.conf geändert
         # mogrify -resize 70% $MOTION_PIC/after.jpg
@@ -124,12 +120,12 @@ else
         # echo "$DATE2:Rufe Python-Skript differenz_jpg.py auf"
         # Erzeuge ein rot maskiertes Bild diff.png der Unterschiede von before.jpg und after.jpg im selben Verzeichnis
         # echo "Erzeuge ein rot maskiertes Bild diff.png der Unterschiede von before.jpg und after.jpg im selben Verzeichnis" >> $LOG/start.log
-        # echo "Rufe Python-Skript differenz_jpg.py auf" >> $LOG/start.log
+        echo "Rufe Python-Skript differenz_jpg.py auf" >> $LOG/start.log
         $SYS_BIN/python3  $MOTION_BIN/differenz_jpg.py
 
         DATE3=`date +%F_%H.%M.%S`
         # echo "Rufe trim.bash auf"
-        # echo "$DATE3: Rufe trim.bash auf" >> $LOG/start.log
+        echo "$DATE3: Rufe trim.bash auf" >> $LOG/start.log
         # Image after.jpg wird auf die Größe von ROI.jpg getrimmt.
         $MOTION_BIN/trim.bash
 
@@ -149,13 +145,9 @@ SNAP_CNT=`ls -1|grep ^snap|wc -l`
 
 if [[ "$SNAP_CNT" -gt 3 ]]; then
   find $MOTION_PIC -type f -name "snap_*" -mmin +360 -exec rm -f {} \;
-  # echo "ENDE2: Lösche noch alte Snapshots ...."
+  echo "ENDE2: Lösche noch alte Snapshots ...." >> $LOG/start.log
 fi  
 
-# Starte wieder die Motion-Funktion
-/usr/bin/lwp-request http://max:moritz2@localhost:8080/0/detection/start  > /dev/null
-#-# echo "Motion-Detektion wieder gestartet"
-# echo " - - - ENDE - - -" 
 
 DATE5=`date +%F_%H.%M.%S`
 echo "$DATE5:  - - - ENDE - - -" >> $LOG/start.log 
